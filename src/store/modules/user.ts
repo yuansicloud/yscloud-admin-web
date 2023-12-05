@@ -7,7 +7,7 @@ import { ROLES_KEY, TOKEN_KEY, USER_INFO_KEY } from '@/enums/cacheEnum';
 import { getAuthCache, setAuthCache } from '@/utils/auth';
 import { GetUserInfoModel, LoginParams, LoginByPhoneParams } from '@/api/sys/model/userModel';
 import { useAbpStoreWithOut } from './abp';
-import { useAppStoreWithOut } from './app';
+// import { useAppStoreWithOut } from './app';
 
 import { loginApi, loginPhoneApi, getUserInfo } from '@/api/sys/user';
 import { useI18n } from '@/hooks/web/useI18n';
@@ -194,7 +194,7 @@ export const useUserStore = defineStore({
         username: currentUser.userName,
         roles: currentUser.roles,
         // 从 userinfo 端点获取
-        realName: userInfo?.nickname,
+        realName: userInfo?.given_name,
         phoneNumber: userInfo?.phone_number,
         phoneNumberConfirmed: userInfo?.phone_number_verified === 'True',
         email: userInfo?.email,

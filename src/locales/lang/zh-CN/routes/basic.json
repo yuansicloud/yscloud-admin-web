@@ -1,4 +1,7 @@
 {
-  "login": "登录",
-  "errorLogList": "错误日志列表"
+  "accountCenter": "个人中心",
+  "accountEmailConfirm": "确认邮件",
+  "accountSetting": "账户设置",
+  "errorLogList": "错误日志列表",
+  "login": "登录"
 }
