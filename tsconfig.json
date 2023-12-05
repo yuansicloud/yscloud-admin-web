@@ -3,6 +3,9 @@
   "extends": "@vben/ts-config/vue-app.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "allowJs": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
     "declaration": false,
     "types": ["vite/client"],
     "paths": {
