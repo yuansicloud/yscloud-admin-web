@@ -6,7 +6,7 @@ import 'ant-design-vue/dist/reset.css';
 import 'virtual:svg-icons-register';
 
 import { createApp } from 'vue';
-
+import VueCookies from 'vue-cookies';
 import { registerGlobComp } from '@/components/registerGlobComp';
 import { setupGlobDirectives } from '@/directives';
 import { setupI18n } from '@/locales/setupI18n';
@@ -59,6 +59,8 @@ async function bootstrap() {
 
   // https://next.router.vuejs.org/api/#isready
   // await router.isReady();
+
+  app.use(VueCookies);
 
   app.mount('#app');
 }

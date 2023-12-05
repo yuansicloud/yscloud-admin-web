@@ -1,8 +1,11 @@
 <template>
   <BasicTable class="text-lg" @register="registerTable">
     <template #headerTop>
-      <div class="text-5xl">{{ currentTime }}</div></template
-    >
+      <div class="flex text-5xl"
+        ><div>{{ currentTime }}</div
+        ><Button type="primary" shape="circle" @click="voice"> P </Button></div
+      >
+    </template>
     <!-- <template #toolbar>
       <a-button type="primary" @click="getFormValues">获取表单数据</a-button>
     </template> -->
@@ -39,7 +42,9 @@
   </BasicTable>
 </template>
 <script lang="ts">
+  import Speech from 'speak-tts';
   import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue';
+  import { Button } from 'ant-design-vue';
   import { BasicTable, useTable } from '@/components/Table';
   import { getBasicColumns } from './tableData';
   import { cremationReservationListApi } from '/@/api/funeral/cremation';
@@ -50,6 +55,7 @@
     components: { BasicTable },
     setup() {
       const currentTime = ref('');
+      const speech = new Speech();
 
       function updateCurrentTime() {
         currentTime.value = new Date().toLocaleTimeString();
@@ -65,17 +71,15 @@
         });
       });
 
-      const [registerTable, { getPaginationRef, setPagination }] = useTable({
+      const [registerTable, { getPaginationRef, setPagination, reload }] = useTable({
         // title: '火化信息',
         api: cremationReservationListApi,
         columns: getBasicColumns(),
-        // useSearchForm: true,
-        // formConfig: getFormConfig(),
+        searchInfo: { CreationStartTime: dateUtil().format('YYYY-MM-DD 00:00:00') },
         showTableSetting: true,
         tableSetting: { fullScreen: true },
         showIndexColumn: false,
         rowKey: 'id',
-        // actionColumn: getActionColumn(),
         beforeFetch: formatPagedRequest,
         bordered: true,
       });
@@ -125,6 +129,42 @@
             current: pageInfo.current + 1,
           }); // Go to the next page
         }
+        reload();
+      }
+
+      //初始化语音插件 - init内可以全部为空 - 自定义
+      speech
+        .init({
+          volume: 1, // 音量
+          lang: 'zh-CN', // 语言
+          rate: 1, // 语速
+          pitch: 1, // 音调
+          splitSentences: true, // 在句子结束时暂停
+          listeners: {
+            // 事件
+            onvoiceschanged: (voices) => {
+              console.log('事件声音已更改', voices);
+            },
+          },
+        })
+        .then((data) => {
+          console.log('语音已准备好，声音可用', data);
+        })
+        .catch((e) => {
+          console.error('初始化时发生错误 : ', e);
+        });
+      //语音播报按钮
+      function voice() {
+        speech
+          .speak({
+            text: '测试语音！测试语音！请逝者小明的亲属到窗口领灰！', //这里使用文字或者i18n 都可以 看自己需求
+          })
+          .then(() => {
+            console.log('Success !');
+          })
+          .catch((e) => {
+            console.error('An error occurred :', e);
+          });
       }
 
       return {
@@ -133,6 +173,8 @@
         getSexDisplayName,
         getReservationStatusDisplayName,
         dateUtil,
+        Button,
+        voice,
       };
     },
   });

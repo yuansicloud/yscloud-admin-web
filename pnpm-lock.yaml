@@ -97,6 +97,9 @@ importers:
       sortablejs:
         specifier: ^1.15.0
         version: 1.15.0
+      speak-tts:
+        specifier: ^2.0.8
+        version: 2.0.8
       tinymce:
         specifier: ^5.10.7
         version: 5.10.7
@@ -109,6 +112,9 @@ importers:
       vue:
         specifier: ^3.3.4
         version: 3.3.4
+      vue-cookies:
+        specifier: ^1.8.3
+        version: 1.8.3
       vue-i18n:
         specifier: ^9.6.4
         version: 9.6.4(vue@3.3.4)
@@ -10171,6 +10177,10 @@ packages:
     resolution: {integrity: sha512-XkD+zwiqXHikFZm4AX/7JSCXA98U5Db4AFd5XUg/+9UNtnH75+Z9KxtpYiJZx36mUDVOwH83pl7yvCer6ewM3w==}
     dev: true
 
+  /speak-tts@2.0.8:
+    resolution: {integrity: sha512-VY6Q6mRjdou6bF+x0LspvM7GJhBxHx8CLyGPTNQQ7jrztiGutyI4QNZn0cA17c4uk0FnFbA4PaMI3skeZ6PiFg==}
+    dev: false
+
   /split-string@3.1.0:
     resolution: {integrity: sha512-NzNVhJDYpwceVVii8/Hu6DKfD2G+NrQHlS/V/qgv763EYudVwEcMQNxd2lh+0VrUByXN/oJkl5grOhYWvQUYiw==}
     engines: {node: '>=0.10.0'}
@@ -11649,6 +11659,10 @@ packages:
   /vue-component-type-helpers@1.6.5:
     resolution: {integrity: sha512-iGdlqtajmiqed8ptURKPJ/Olz0/mwripVZszg6tygfZSIL9kYFPJTNY6+Q6OjWGznl2L06vxG5HvNvAnWrnzbg==}
     dev: true
+
+  /vue-cookies@1.8.3:
+    resolution: {integrity: sha512-VBRsyRMVdahBgFfh389TMHPmDdr4URDJNMk4FKSCfuNITs7+jitBDhwyL4RJd3WUsfOYNNjPAkfbehyH9AFuoA==}
+    dev: false
 
   /vue-demi@0.14.5(vue@3.3.4):
     resolution: {integrity: sha512-o9NUVpl/YlsGJ7t+xuqJKx8EBGf1quRhCiT6D/J0pfwmk9zUwYkC7yrF4SZCe6fETvSM3UNL2edcbYrSyc4QHA==}
