@@ -75,7 +75,7 @@
         // title: '火化信息',
         api: cremationReservationListApi,
         columns: getBasicColumns(),
-        searchInfo: { CreationStartTime: dateUtil().format('YYYY-MM-DD 00:00:00') },
+        searchInfo: { CreationStartTime: dateUtil().format('YYYY-MM-DD') + 'T00:00:00z' },
         showTableSetting: true,
         tableSetting: { fullScreen: true },
         showIndexColumn: false,

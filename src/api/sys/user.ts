@@ -52,7 +52,7 @@ export function loginApi(
     },
     {
       errorMessageMode: mode,
-      apiUrl: '/connect',
+      apiUrl: 'https://auth.yuansicloud.com',
       withToken: false,
     },
   );
@@ -83,7 +83,7 @@ export function loginPhoneApi(params: LoginByPhoneParams, mode: ErrorMessageMode
     },
     {
       errorMessageMode: mode,
-      apiUrl: '/connect',
+      apiUrl: 'https://auth.yuansicloud.com',
     },
   );
 }
@@ -99,7 +99,7 @@ export function getUserInfo() {
       },
       {
         errorMessageMode: 'none',
-        apiUrl: '/connect',
+        apiUrl: 'https://auth.yuansicloud.com',
       },
     )
     .catch(() => {
