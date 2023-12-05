@@ -1,4 +1,3 @@
-import type { UserInfo } from '#/store';
 import type { ErrorMessageMode } from '#/axios';
 import { defineStore } from 'pinia';
 import { store } from '@/store';
@@ -6,23 +5,29 @@ import { RoleEnum } from '@/enums/roleEnum';
 import { PageEnum } from '@/enums/pageEnum';
 import { ROLES_KEY, TOKEN_KEY, USER_INFO_KEY } from '@/enums/cacheEnum';
 import { getAuthCache, setAuthCache } from '@/utils/auth';
-import { GetUserInfoModel, LoginParams } from '@/api/sys/model/userModel';
-import { doLogout, getUserInfo, loginApi } from '@/api/sys/user';
+import { GetUserInfoModel, LoginParams, LoginByPhoneParams } from '@/api/sys/model/userModel';
+import { useAbpStoreWithOut } from './abp';
+import { useAppStoreWithOut } from './app';
+
+import { loginApi, loginPhoneApi, getUserInfo } from '@/api/sys/user';
 import { useI18n } from '@/hooks/web/useI18n';
 import { useMessage } from '@/hooks/web/useMessage';
 import { router } from '@/router';
 import { usePermissionStore } from '@/store/modules/permission';
 import { RouteRecordRaw } from 'vue-router';
 import { PAGE_NOT_FOUND_ROUTE } from '@/router/routes/basic';
-import { isArray } from '@/utils/is';
 import { h } from 'vue';
 
+import { mgr } from '@/utils/auth/oidc';
+
 interface UserState {
-  userInfo: Nullable<UserInfo>;
+  userInfo: Nullable<GetUserInfoModel>;
   token?: string;
   roleList: RoleEnum[];
   sessionTimeout?: boolean;
   lastUpdateTime: number;
+  /** sso标记,用于后台退出 */
+  sso?: boolean;
 }
 
 export const useUserStore = defineStore({
@@ -40,8 +45,11 @@ export const useUserStore = defineStore({
     lastUpdateTime: 0,
   }),
   getters: {
-    getUserInfo(state): UserInfo {
-      return state.userInfo || getAuthCache<UserInfo>(USER_INFO_KEY) || {};
+    getSso(state): boolean {
+      return state.sso === true;
+    },
+    getUserInfo(state): GetUserInfoModel {
+      return state.userInfo || getAuthCache<GetUserInfoModel>(USER_INFO_KEY) || {};
     },
     getToken(state): string {
       return state.token || getAuthCache<string>(TOKEN_KEY);
@@ -57,6 +65,9 @@ export const useUserStore = defineStore({
     },
   },
   actions: {
+    setSso(sso: boolean) {
+      this.sso = sso;
+    },
     setToken(info: string | undefined) {
       this.token = info ? info : ''; // for null or undefined value
       setAuthCache(TOKEN_KEY, info);
@@ -65,7 +76,7 @@ export const useUserStore = defineStore({
       this.roleList = roleList;
       setAuthCache(ROLES_KEY, roleList);
     },
-    setUserInfo(info: UserInfo | null) {
+    setUserInfo(info: GetUserInfoModel) {
       this.userInfo = info;
       this.lastUpdateTime = new Date().getTime();
       setAuthCache(USER_INFO_KEY, info);
@@ -74,10 +85,12 @@ export const useUserStore = defineStore({
       this.sessionTimeout = flag;
     },
     resetState() {
-      this.userInfo = null;
-      this.token = '';
-      this.roleList = [];
-      this.sessionTimeout = false;
+      this.setUserInfo({});
+      this.setToken('');
+      this.setRoleList([]);
+      this.setSessionTimeout(false);
+      const abpStore = useAbpStoreWithOut();
+      abpStore.resetSession();
     },
     /**
      * @description: login
@@ -85,25 +98,62 @@ export const useUserStore = defineStore({
     async login(
       params: LoginParams & {
         goHome?: boolean;
+        isPortalLogin?: boolean;
         mode?: ErrorMessageMode;
+        loginCallback?: () => Promise<void>;
       },
     ): Promise<GetUserInfoModel | null> {
       try {
-        const { goHome = true, mode, ...loginParams } = params;
-        const data = await loginApi(loginParams, mode);
-        const { token } = data;
-
-        // save token
-        this.setToken(token);
-        return this.afterLoginAction(goHome);
+        const { goHome = true, mode, isPortalLogin, loginCallback, ...loginParams } = params;
+        const data = await loginApi(loginParams, mode, isPortalLogin);
+        const { access_token } = data;
+        this.setSso(false);
+        this.setToken(access_token);
+        return this.afterLoginAction(goHome, loginCallback);
       } catch (error) {
         return Promise.reject(error);
       }
     },
-    async afterLoginAction(goHome?: boolean): Promise<GetUserInfoModel | null> {
+
+    async loginByPhone(
+      params: LoginByPhoneParams & {
+        goHome?: boolean;
+        mode?: ErrorMessageMode;
+        loginCallback?: () => Promise<void>;
+      },
+    ): Promise<GetUserInfoModel | null> {
+      try {
+        const { goHome = true, mode, loginCallback, ...loginParams } = params;
+        const data = await loginPhoneApi(loginParams, mode);
+        const { access_token } = data;
+        this.setSso(false);
+        this.setToken(access_token);
+        return this.afterLoginAction(goHome, loginCallback);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+
+    async oidcLogin(user: { access_token: string }) {
+      this.setSso(true);
+      this.setToken(user.access_token);
+      return this.afterLoginAction(true);
+    },
+
+    async afterLoginAction(
+      goHome?: boolean,
+      loginCallback?: () => Promise<void>,
+    ): Promise<GetUserInfoModel | null> {
       if (!this.getToken) return null;
       // get user info
-      const userInfo = await this.getUserInfoAction();
+      await this.getUserInfoAction(loginCallback);
+
+      // try {
+      //   const appStore = useAppStoreWithOut();
+      //   await appStore.initlizeTheme();
+      // } catch (error) {
+      //   console.warn('Failed to synchronize the user theme.');
+      // }
 
       const sessionTimeout = this.sessionTimeout;
       if (sessionTimeout) {
@@ -118,39 +168,58 @@ export const useUserStore = defineStore({
           router.addRoute(PAGE_NOT_FOUND_ROUTE as unknown as RouteRecordRaw);
           permissionStore.setDynamicAddedRoute(true);
         }
-        goHome && (await router.replace(userInfo?.homePath || PageEnum.BASE_HOME));
+        goHome && (await router.replace(this.userInfo?.homePath || PageEnum.BASE_HOME));
       }
-      return userInfo;
+      return this.userInfo;
     },
-    async getUserInfoAction(): Promise<UserInfo | null> {
-      if (!this.getToken) return null;
+    async getUserInfoAction(loginCallback?: () => Promise<void>): Promise<GetUserInfoModel> {
       const userInfo = await getUserInfo();
-      const { roles = [] } = userInfo;
-      if (isArray(roles)) {
-        const roleList = roles.map((item) => item.value) as RoleEnum[];
-        this.setRoleList(roleList);
-      } else {
-        userInfo.roles = [];
-        this.setRoleList([]);
+
+      const abpStore = useAbpStoreWithOut();
+
+      let currentUser = abpStore.getApplication.currentUser;
+      //  避免多次请求接口
+      if (userInfo?.sub !== currentUser.id) {
+        await abpStore.initlizeAbpApplication();
+        currentUser = abpStore.getApplication.currentUser;
       }
-      this.setUserInfo(userInfo);
-      return userInfo;
+
+      if (loginCallback) {
+        await loginCallback();
+      }
+
+      const outgoingUserInfo: { [key: string]: any } = {
+        // 从 currentuser 接口获取
+        userId: currentUser.id,
+        username: currentUser.userName,
+        roles: currentUser.roles,
+        // 从 userinfo 端点获取
+        realName: userInfo?.nickname,
+        phoneNumber: userInfo?.phone_number,
+        phoneNumberConfirmed: userInfo?.phone_number_verified === 'True',
+        email: userInfo?.email,
+        emailConfirmed: userInfo?.email_verified === 'True',
+      };
+      // if (userInfo?.extraProperties?.avatarUrl) {
+      //   outgoingUserInfo.avatar = userInfo?.extraProperties?.avatarUrl;
+      // }
+      this.setUserInfo(outgoingUserInfo);
+
+      return outgoingUserInfo;
     },
     /**
      * @description: logout
      */
     async logout(goLogin = false) {
-      if (this.getToken) {
-        try {
-          await doLogout();
-        } catch {
-          console.log('注销Token失败');
-        }
-      }
       this.setToken(undefined);
       this.setSessionTimeout(false);
-      this.setUserInfo(null);
-      goLogin && router.push(PageEnum.BASE_LOGIN);
+      this.setUserInfo({});
+      if (this.getSso === true) {
+        this.setSso(false);
+        mgr.signoutRedirect();
+      } else {
+        goLogin && router.push(PageEnum.BASE_LOGIN);
+      }
     },
 
     /**

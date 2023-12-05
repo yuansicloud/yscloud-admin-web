@@ -1,11 +1,7 @@
-import type { FormInstance } from 'ant-design-vue/lib/form/Form';
-import type {
-  RuleObject,
-  NamePath,
-  Rule as ValidationRule,
-} from 'ant-design-vue/lib/form/interface';
 import { ref, computed, unref, Ref } from 'vue';
-import { useI18n } from '@/hooks/web/useI18n';
+import { useValidation } from '@/hooks/abp/useValidation';
+import { usePasswordValidator } from '@/hooks/security/usePasswordValidator';
+import { Rule } from '@/components/Form';
 
 export enum LoginStateEnum {
   LOGIN,
@@ -13,12 +9,14 @@ export enum LoginStateEnum {
   RESET_PASSWORD,
   MOBILE,
   QR_CODE,
+  MOBILE_REGISTER,
+  WECHAT,
+  SSO,
+  TwoFactor,
+  Portal,
 }
 
 const currentState = ref(LoginStateEnum.LOGIN);
-
-// 这里也可以优化
-// import { createGlobalState } from '@vueuse/core'
 
 export function useLoginState() {
   function setLoginState(state: LoginStateEnum) {
@@ -34,12 +32,7 @@ export function useLoginState() {
   return { setLoginState, getLoginState, handleBackLogin };
 }
 
-export function useFormValid<T extends Object = any>(formRef: Ref<FormInstance>) {
-  const validate = computed(() => {
-    const form = unref(formRef);
-    return form?.validate ?? ((_nameList?: NamePath) => Promise.resolve());
-  });
-
+export function useFormValid<T extends Object = any>(formRef: Ref<any>) {
   async function validForm() {
     const form = unref(formRef);
     if (!form) return;
@@ -47,61 +40,146 @@ export function useFormValid<T extends Object = any>(formRef: Ref<FormInstance>)
     return data as T;
   }
 
-  return { validate, validForm };
+  return { validForm };
+}
+
+export function useFormFieldsValid<T extends Object = any>(formRef: Ref<any>) {
+  async function validFormFields(fields?: string[]) {
+    const form = unref(formRef);
+    if (!form) return;
+    const data = await form.validateFields(fields);
+    return data as T;
+  }
+
+  return { validFormFields };
 }
 
 export function useFormRules(formData?: Recordable) {
-  const { t } = useI18n();
+  const { ruleCreator } = useValidation();
+  const { validate } = usePasswordValidator();
 
-  const getAccountFormRule = computed(() => createRule(t('sys.login.accountPlaceholder')));
-  const getPasswordFormRule = computed(() => createRule(t('sys.login.passwordPlaceholder')));
-  const getSmsFormRule = computed(() => createRule(t('sys.login.smsPlaceholder')));
-  const getMobileFormRule = computed(() => createRule(t('sys.login.mobilePlaceholder')));
-
-  const validatePolicy = async (_: RuleObject, value: boolean) => {
-    return !value ? Promise.reject(t('sys.login.policyPlaceholder')) : Promise.resolve();
-  };
-
-  const validateConfirmPassword = (password: string) => {
-    return async (_: RuleObject, value: string) => {
-      if (!value) {
-        return Promise.reject(t('sys.login.passwordPlaceholder'));
-      }
-      if (value !== password) {
-        return Promise.reject(t('sys.login.diffPwd'));
-      }
-      return Promise.resolve();
+  const getUserNameFormRule = computed(() =>
+    ruleCreator.fieldRequired({
+      name: 'UserName',
+      resourceName: 'AbpAccount',
+      prefix: 'DisplayName',
+    }),
+  );
+  const getPasswordFormRule = computed(() =>
+    ruleCreator.fieldRequired({
+      name: 'Password',
+      resourceName: 'AbpAccount',
+      prefix: 'DisplayName',
+    }),
+  );
+  const getRegPasswordFormRule = computed(() =>
+    ruleCreator.defineValidator({
+      trigger: 'change',
+      validator: (_, value: any) => {
+        if (!value) {
+          return Promise.resolve();
+        }
+        return validate(value)
+          .then(() => Promise.resolve())
+          .catch((error) => Promise.reject(error));
+      },
+    }),
+  );
+  const getEmailFormRule = computed(() => {
+    return [
+      ...ruleCreator.fieldRequired({
+        name: 'Email',
+        resourceName: 'AbpAccount',
+        prefix: 'DisplayName',
+      }),
+      ...ruleCreator.fieldDoNotValidEmailAddress({
+        name: 'Email',
+        resourceName: 'AbpAccount',
+        prefix: 'DisplayName',
+      }),
+    ];
+  });
+  const getMobileFormRule = computed(() => {
+    return [
+      ...ruleCreator.fieldRequired({
+        name: 'PhoneNumber',
+        resourceName: 'AbpAccount',
+        prefix: 'DisplayName',
+      }),
+      ...ruleCreator.fieldDoNotValidPhoneNumber({
+        name: 'PhoneNumber',
+        resourceName: 'AbpAccount',
+        prefix: 'DisplayName',
+      }),
+    ];
+  });
+  const getMobileCodeFormRule = computed(() =>
+    ruleCreator.fieldRequired({
+      name: 'SmsVerifyCode',
+      resourceName: 'AbpAccount',
+      prefix: 'DisplayName',
+    }),
+  );
+  const getValidateConfirmPasswordRule = computed(() => {
+    return (password: string) => {
+      return ruleCreator.doNotMatch({
+        name: 'NewPassword',
+        resourceName: 'AbpAccount',
+        prefix: 'DisplayName',
+        matchField: 'NewPasswordConfirm',
+        matchValue: password,
+        trigger: 'change',
+        required: true,
+      });
     };
-  };
+  });
 
-  const getFormRules = computed((): { [k: string]: ValidationRule | ValidationRule[] } => {
-    const accountFormRule = unref(getAccountFormRule);
+  // const validatePolicy = async (_: RuleObject, value: boolean) => {
+  //   return !value ? Promise.reject(t('sys.login.policyPlaceholder')) : Promise.resolve();
+  // };
+
+  const getFormRules = computed((): { [k: string]: Rule | Rule[] } => {
+    const userNameFormRule = unref(getUserNameFormRule);
     const passwordFormRule = unref(getPasswordFormRule);
-    const smsFormRule = unref(getSmsFormRule);
+    const regPasswordFormRule = unref(getRegPasswordFormRule);
+    const emailFormRule = unref(getEmailFormRule);
     const mobileFormRule = unref(getMobileFormRule);
+    const mobileCodeFormRule = unref(getMobileCodeFormRule);
+    const validateConfirmPasswordRule = unref(getValidateConfirmPasswordRule);
 
     const mobileRule = {
-      sms: smsFormRule,
-      mobile: mobileFormRule,
+      code: mobileCodeFormRule,
+      phoneNumber: mobileFormRule,
     };
     switch (unref(currentState)) {
       // register form rules
       case LoginStateEnum.REGISTER:
         return {
-          account: accountFormRule,
-          password: passwordFormRule,
-          confirmPassword: [
-            { validator: validateConfirmPassword(formData?.password), trigger: 'change' },
-          ],
-          policy: [{ validator: validatePolicy, trigger: 'change' }],
-          ...mobileRule,
+          userName: userNameFormRule,
+          password: [...passwordFormRule, ...regPasswordFormRule],
+          emailAddress: emailFormRule,
+          // policy: [{ validator: validatePolicy, trigger: 'change' }],
+        };
+
+      // register form rules
+      case LoginStateEnum.MOBILE_REGISTER:
+        const mobileCodeRule = unref(getMobileCodeFormRule);
+        return {
+          userName: userNameFormRule,
+          password: [...passwordFormRule, ...regPasswordFormRule],
+          phoneNumber: mobileFormRule,
+          code: mobileCodeRule,
         };
 
       // reset password form rules
       case LoginStateEnum.RESET_PASSWORD:
         return {
-          account: accountFormRule,
           ...mobileRule,
+          newPassword: [...passwordFormRule, ...regPasswordFormRule],
+          newPasswordConfirm: [
+            ...validateConfirmPasswordRule(formData?.newPassword),
+            ...regPasswordFormRule,
+          ],
         };
 
       // mobile form rules
@@ -111,20 +189,10 @@ export function useFormRules(formData?: Recordable) {
       // login form rules
       default:
         return {
-          account: accountFormRule,
+          userName: userNameFormRule,
           password: passwordFormRule,
         };
     }
   });
   return { getFormRules };
-}
-
-function createRule(message: string): ValidationRule[] {
-  return [
-    {
-      required: true,
-      message,
-      trigger: 'change',
-    },
-  ];
 }

@@ -11,6 +11,7 @@ import { updateHeaderBgColor, updateSidebarBgColor } from '@/logics/theme/update
 import { updateColorWeak } from '@/logics/theme/updateColorWeak';
 import { updateGrayMode } from '@/logics/theme/updateGrayMode';
 
+import { useAbpStore } from '@/store/modules/abp';
 import { useAppStore } from '@/store/modules/app';
 import { useLocaleStore } from '@/store/modules/locale';
 
@@ -74,4 +75,10 @@ export function clearObsoleteStorage() {
       }
     });
   });
+}
+
+export async function initAbpConfigStore() {
+  const abpStore = useAbpStore();
+  await abpStore.initlizeAbpApplication();
+  await abpStore.initlizaAbpApiDefinition();
 }

@@ -36,10 +36,12 @@ export interface RetryRequest {
   waitTime: number;
 }
 export interface Result<T = any> {
-  code: number;
-  type: 'success' | 'error' | 'warning';
+  code: number | string;
   message: string;
+  details?: string;
   result: T;
+  // 请求重试机制
+  retryRequest?: RetryRequest;
 }
 
 // multipart/form-data: upload file

@@ -3,8 +3,16 @@ import type { GlobConfig } from '#/config';
 import { getAppEnvConfig } from '@/utils/env';
 
 export const useGlobSetting = (): Readonly<GlobConfig> => {
-  const { VITE_GLOB_APP_TITLE, VITE_GLOB_API_URL, VITE_GLOB_API_URL_PREFIX, VITE_GLOB_UPLOAD_URL } =
-    getAppEnvConfig();
+  const {
+    VITE_GLOB_APP_TITLE,
+    VITE_GLOB_API_URL,
+    VITE_GLOB_API_URL_PREFIX,
+    VITE_GLOB_UPLOAD_URL,
+    VITE_GLOB_AUTHORITY,
+    VITE_GLOB_CLIENT_ID,
+    VITE_GLOB_CLIENT_SECRET,
+    VITE_GLOB_MULTITENANCY_KEY,
+  } = getAppEnvConfig();
 
   // Take global configuration
   const glob: Readonly<GlobConfig> = {
@@ -13,6 +21,10 @@ export const useGlobSetting = (): Readonly<GlobConfig> => {
     shortName: VITE_GLOB_APP_TITLE.replace(/\s/g, '_').replace(/-/g, '_'),
     urlPrefix: VITE_GLOB_API_URL_PREFIX,
     uploadUrl: VITE_GLOB_UPLOAD_URL,
+    authority: VITE_GLOB_AUTHORITY,
+    clientId: VITE_GLOB_CLIENT_ID,
+    clientSecret: VITE_GLOB_CLIENT_SECRET,
+    multiTenantKey: VITE_GLOB_MULTITENANCY_KEY,
   };
   return glob as Readonly<GlobConfig>;
 };

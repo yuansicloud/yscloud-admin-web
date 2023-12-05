@@ -51,6 +51,7 @@ export const useAbpStore = defineStore({
       ls.set(ABP_API_KEY, apidefinition);
     },
     mergeLocaleMessage(localization: ApplicationLocalizationConfigurationDto) {
+      console.log(localization);
       if (localization.languagesMap['vben-admin-ui']) {
         const transferCulture = localization.languagesMap['vben-admin-ui'].filter(
           (x) => x.value === localization.currentCulture.cultureName,
@@ -85,8 +86,9 @@ export const useAbpStore = defineStore({
     },
     async initlizeAbpApplication() {
       const application = await getApplicationConfiguration();
+      console.log(application);
       this.setApplication(application);
-
+      console.log(application);
       const { localization } = application;
       this.mergeLocaleMessage(localization);
     },

@@ -88,6 +88,7 @@
     "lodash-es": "^4.17.21",
     "mockjs": "^1.1.0",
     "nprogress": "^0.2.0",
+    "oidc-client": "^1.11.5",
     "path-to-regexp": "^6.2.1",
     "pinia": "2.1.4",
     "pinia-plugin-persistedstate": "^3.2.0",

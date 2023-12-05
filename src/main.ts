@@ -11,7 +11,7 @@ import { registerGlobComp } from '@/components/registerGlobComp';
 import { setupGlobDirectives } from '@/directives';
 import { setupI18n } from '@/locales/setupI18n';
 import { setupErrorHandle } from '@/logics/error-handle';
-import { initAppConfigStore } from '@/logics/initAppConfig';
+import { initAppConfigStore, initAbpConfigStore } from '@/logics/initAppConfig';
 import { router, setupRouter } from '@/router';
 import { setupRouterGuard } from '@/router/guard';
 import { setupStore } from '@/store';
@@ -54,6 +54,8 @@ async function bootstrap() {
   // Configure global error handling
   // 配置全局错误处理
   setupErrorHandle(app);
+
+  await initAbpConfigStore();
 
   // https://next.router.vuejs.org/api/#isready
   // await router.isReady();

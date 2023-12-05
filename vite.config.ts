@@ -15,20 +15,23 @@ export default defineApplicationConfig({
       ],
     },
     server: {
+      // Listening on all local IPs
+      host: true,
+      port: 8080,
       proxy: {
-        '/basic-api': {
-          target: 'http://localhost:3000',
+        '/api': {
+          target: 'https://admingateway.yuansicloud.com',
           changeOrigin: true,
           ws: true,
-          rewrite: (path) => path.replace(new RegExp(`^/basic-api`), ''),
+          rewrite: (path) => path.replace(new RegExp(`^/api`), ''),
           // only https
-          // secure: false
+          secure: false,
         },
-        '/upload': {
-          target: 'http://localhost:3300/upload',
+        '/connect': {
+          target: 'https://auth.yuansicloud.com',
           changeOrigin: true,
           ws: true,
-          rewrite: (path) => path.replace(new RegExp(`^/upload`), ''),
+          rewrite: (path) => path.replace(new RegExp(`^/connect`), ''),
         },
       },
     },

@@ -1,8 +1,8 @@
 import type { ErrorMessageMode } from '#/axios';
 import { useMessage } from '@/hooks/web/useMessage';
 import { useI18n } from '@/hooks/web/useI18n';
-// import router from '@/router';
-// import { PageEnum } from '@/enums/pageEnum';
+// import router from '/@/router';
+// import { PageEnum } from '/@/enums/pageEnum';
 import { useUserStoreWithOut } from '@/store/modules/user';
 import projectSetting from '@/settings/projectSetting';
 import { SessionTimeoutProcessingEnum } from '@/enums/appEnum';
@@ -12,7 +12,7 @@ const error = createMessage.error!;
 const stp = projectSetting.sessionTimeoutProcessing;
 
 export function checkStatus(
-  status: number,
+  response: any,
   msg: string,
   errorMessageMode: ErrorMessageMode = 'message',
 ): void {
@@ -20,7 +20,7 @@ export function checkStatus(
   const userStore = useUserStoreWithOut();
   let errMessage = '';
 
-  switch (status) {
+  switch (response.status) {
     case 400:
       errMessage = `${msg}`;
       break;
@@ -68,6 +68,8 @@ export function checkStatus(
       errMessage = t('sys.api.errMsg505');
       break;
     default:
+      errMessage = t('sys.api.apiRequestFailed');
+      break;
   }
 
   if (errMessage) {
@@ -77,4 +79,66 @@ export function checkStatus(
       error({ content: errMessage, key: `global_error_message_status_${status}` });
     }
   }
+}
+
+export function checkResponse(response: any): string | undefined {
+  // 会话超时
+  if (response.status === 401) {
+    const userStore = useUserStoreWithOut();
+    userStore.setToken(undefined);
+    userStore.setSessionTimeout(true);
+    const { t } = useI18n();
+    return t('sys.api.errMsg401');
+  }
+
+  if (!response?.data) {
+    // 都没捕获到则提示默认错误信息
+    checkStatus(response, '');
+    return undefined;
+  }
+
+  if (response.data.Enterprises) {
+    return response.data.Enterprises;
+  }
+
+  let errorJson = response.data.error;
+
+  // abp框架抛出异常信息
+  if (response.headers['_abperrorformat'] === 'true') {
+    if (errorJson === undefined && response.data.type === 'application/json') {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        errorJson = JSON.parse(e.target?.result as string);
+        console.log(errorJson);
+        error(errorJson.error.message);
+      };
+      reader.readAsText(response.data);
+    } else {
+      let errorMessage = errorJson.message;
+      if (errorJson.validationErrors) {
+        errorMessage += errorJson.validationErrors.map((v) => v.message).join('\n');
+      }
+      error(errorMessage);
+      return errorMessage;
+    }
+  }
+
+  // oauth错误信息
+  if (response.data.error_description) {
+    error(response.data.error_description);
+    return response.data;
+  }
+
+  // 其他错误
+  if (response.data.error.details) {
+    error(response.data.error.details);
+    return response.data.error.details;
+  }
+
+  if (response.data.error.message) {
+    error(response.data.error.message);
+    return response.data.error.message;
+  }
+
+  return undefined;
 }

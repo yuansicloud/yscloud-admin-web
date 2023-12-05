@@ -1,3 +1,8 @@
+// Tenant key
+export const ABP_TENANT_KEY = 'ABP_TENANT_';
+export const ABP_APP_KEY = 'ABP_APP_';
+export const ABP_API_KEY = 'ABP_API_';
+
 // token key
 export const TOKEN_KEY = 'TOKEN__';
 
@@ -11,7 +16,6 @@ export const ROLES_KEY = 'ROLES__KEY__';
 
 // project config key
 export const PROJ_CFG_KEY = 'PROJ__CFG__KEY__';
-export const API_ADDRESS = 'API_ADDRESS__';
 
 // lock info
 export const LOCK_INFO_KEY = 'LOCK__INFO__KEY__';
@@ -25,6 +29,8 @@ export const APP_LOCAL_CACHE_KEY = 'COMMON__LOCAL__KEY__';
 
 // base global session key
 export const APP_SESSION_CACHE_KEY = 'COMMON__SESSION__KEY__';
+
+export const API_ADDRESS = 'API_ADDRESS__';
 
 export enum CacheTypeEnum {
   SESSION,

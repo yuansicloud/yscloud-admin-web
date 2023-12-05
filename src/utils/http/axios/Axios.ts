@@ -1,11 +1,5 @@
-import type {
-  AxiosRequestConfig,
-  AxiosInstance,
-  AxiosResponse,
-  AxiosError,
-  InternalAxiosRequestConfig,
-} from 'axios';
-import type { RequestOptions, Result, UploadFileParams } from '#/axios';
+import type { AxiosRequestConfig, AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import type { RequestOptions, UploadFileParams } from '#/axios';
 import type { CreateAxiosOptions } from './axiosTransform';
 import axios from 'axios';
 import qs from 'qs';
@@ -66,14 +60,10 @@ export class VAxios {
   }
 
   /**
-   * @description: Interceptor configuration 拦截器配置
+   * @description: Interceptor configuration
    */
   private setupInterceptors() {
-    // const transform = this.getTransform();
-    const {
-      axiosInstance,
-      options: { transform },
-    } = this;
+    const transform = this.getTransform();
     if (!transform) {
       return;
     }
@@ -87,14 +77,16 @@ export class VAxios {
     const axiosCanceler = new AxiosCanceler();
 
     // Request interceptor configuration processing
-    this.axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    this.axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
       // If cancel repeat request is turned on, then cancel repeat request is prohibited
-      const requestOptions =
-        (config as unknown as any).requestOptions ?? this.options.requestOptions;
-      const ignoreCancelToken = requestOptions?.ignoreCancelToken ?? true;
+      // @ts-ignore
+      const { ignoreCancelToken } = config.requestOptions;
+      const ignoreCancel =
+        ignoreCancelToken !== undefined
+          ? ignoreCancelToken
+          : this.options.requestOptions?.ignoreCancelToken;
 
-      !ignoreCancelToken && axiosCanceler.addPending(config);
-
+      !ignoreCancel && axiosCanceler.addPending(config);
       if (requestInterceptors && isFunction(requestInterceptors)) {
         config = requestInterceptors(config, this.options);
       }
@@ -119,7 +111,8 @@ export class VAxios {
     responseInterceptorsCatch &&
       isFunction(responseInterceptorsCatch) &&
       this.axiosInstance.interceptors.response.use(undefined, (error) => {
-        return responseInterceptorsCatch(axiosInstance, error);
+        // @ts-ignore
+        return responseInterceptorsCatch(this.axiosInstance, error);
       });
   }
 
@@ -199,22 +192,13 @@ export class VAxios {
 
   request<T = any>(config: AxiosRequestConfig, options?: RequestOptions): Promise<T> {
     let conf: CreateAxiosOptions = cloneDeep(config);
-    // cancelToken 如果被深拷贝，会导致最外层无法使用cancel方法来取消请求
-    if (config.cancelToken) {
-      conf.cancelToken = config.cancelToken;
-    }
-
-    if (config.signal) {
-      conf.signal = config.signal;
-    }
-
     const transform = this.getTransform();
 
     const { requestOptions } = this.options;
 
     const opt: RequestOptions = Object.assign({}, requestOptions, options);
 
-    const { beforeRequestHook, requestCatchHook, transformResponseHook } = transform || {};
+    const { beforeRequestHook, requestCatchHook, transformRequestHook } = transform || {};
     if (beforeRequestHook && isFunction(beforeRequestHook)) {
       conf = beforeRequestHook(conf, opt);
     }
@@ -224,11 +208,11 @@ export class VAxios {
 
     return new Promise((resolve, reject) => {
       this.axiosInstance
-        .request<any, AxiosResponse<Result>>(conf)
-        .then((res: AxiosResponse<Result>) => {
-          if (transformResponseHook && isFunction(transformResponseHook)) {
+        .request<any, AxiosResponse<any>>(conf)
+        .then((res: AxiosResponse<any>) => {
+          if (transformRequestHook && isFunction(transformRequestHook)) {
             try {
-              const ret = transformResponseHook(res, opt);
+              const ret = transformRequestHook(res, opt);
               resolve(ret);
             } catch (err) {
               reject(err || new Error('request error!'));
