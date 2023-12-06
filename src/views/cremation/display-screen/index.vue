@@ -1,7 +1,7 @@
 <template>
   <BasicTable class="text-lg" @register="registerTable">
     <template #headerTop>
-      <div class="flex text-5xl"
+      <div class="flex items-center text-5xl"
         ><div>{{ currentTime }}</div
         ><Button type="primary" shape="circle" @click="voice"> P </Button></div
       >
@@ -47,12 +47,12 @@
   import { Button } from 'ant-design-vue';
   import { BasicTable, useTable } from '@/components/Table';
   import { getBasicColumns } from './tableData';
-  import { cremationReservationListApi } from '/@/api/funeral/cremation';
+  import { cremationReservationListApi } from '@/api/funeral/cremation';
   import { dateUtil } from '@/utils/dateUtil';
   import { formatPagedRequest } from '@/utils/http/abp/helper';
 
   export default defineComponent({
-    components: { BasicTable },
+    components: { BasicTable, Button },
     setup() {
       const currentTime = ref('');
       const speech = new Speech();
@@ -155,6 +155,7 @@
         });
       //语音播报按钮
       function voice() {
+        console.log('start voice!');
         speech
           .speak({
             text: '测试语音！测试语音！请逝者小明的亲属到窗口领灰！', //这里使用文字或者i18n 都可以 看自己需求
@@ -173,7 +174,6 @@
         getSexDisplayName,
         getReservationStatusDisplayName,
         dateUtil,
-        Button,
         voice,
       };
     },
