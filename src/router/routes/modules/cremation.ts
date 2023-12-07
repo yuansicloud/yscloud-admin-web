@@ -16,7 +16,7 @@ const cremation: AppRouteModule = {
   children: [
     {
       path: 'display-screen',
-      name: 'DisplayScreen',
+      name: 'CremationDisplayScreen',
       component: () => import('/@/views/cremation/display-screen/index.vue'),
       meta: {
         title: '电子大屏',

@@ -20,6 +20,9 @@
         <template v-if="column.key === 'occupantName'">
           {{ record.occupantName }}
         </template>
+        <template v-if="column.key === 'occupantAge'">
+          {{ record.occupantAge }}
+        </template>
         <template v-if="column.key === 'occupantSex'">
           {{ getSexDisplayName(record.occupantSex) }}
         </template>

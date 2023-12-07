@@ -7,7 +7,7 @@ const transporting: AppRouteModule = {
   path: '/transporting',
   name: 'Transporting',
   component: LAYOUT,
-  redirect: '/transporting/display-screen',
+  redirect: '/transporting/display-screen1',
   meta: {
     orderNo: 11,
     icon: 'ion:grid-outline',
@@ -16,7 +16,7 @@ const transporting: AppRouteModule = {
   children: [
     {
       path: 'display-screen',
-      name: 'DisplayScreen',
+      name: 'TransportingDisplayScreen',
       component: () => import('@/views/transporting/display-screen/index.vue'),
       meta: {
         title: '电子大屏',
