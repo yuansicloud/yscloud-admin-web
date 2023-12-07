@@ -11,8 +11,8 @@ export function getActionColumn(): BasicColumn {
 export function getBasicColumns(): BasicColumn[] {
   return [
     {
-      title: '火化炉',
-      dataIndex: 'cremator',
+      title: '车牌号',
+      dataIndex: 'car',
       width: 150,
     },
     {
@@ -23,12 +23,7 @@ export function getBasicColumns(): BasicColumn[] {
     {
       title: '性别',
       dataIndex: 'occupantSex',
-      width: 100,
-    },
-    {
-      title: '年龄',
-      dataIndex: 'occupantAge',
-      width: 100,
+      width: 50,
     },
     {
       title: '状态',
@@ -36,10 +31,10 @@ export function getBasicColumns(): BasicColumn[] {
       dataIndex: 'reservationStatus',
     },
     {
-      title: '登记时间',
+      title: '接运时间',
       width: 150,
       sorter: true,
-      dataIndex: 'creationTime',
+      dataIndex: 'pickUpTime',
     },
   ];
 }

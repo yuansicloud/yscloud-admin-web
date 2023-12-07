@@ -14,8 +14,8 @@
     </template>
     <template #bodyCell="{ column, record }">
       <div class="text-6xl">
-        <template v-if="column.key === 'cremator'">
-          {{ record.cremator.name }}
+        <template v-if="column.key === 'car'">
+          {{ getCarPlate(record) }}
         </template>
         <template v-if="column.key === 'occupantName'">
           {{ record.occupantName }}
@@ -34,8 +34,8 @@
             {{ getReservationStatusDisplayName(record.reservationStatus) }}
           </div>
         </template>
-        <template v-if="column.key === 'creationTime'">
-          {{ dateUtil(record.creationTime).format('HH:mm') }}
+        <template v-if="column.key === 'pickUpTime'">
+          {{ dateUtil(record.pickUpTime).format('HH:mm') }}
         </template>
       </div>
     </template>
@@ -47,7 +47,7 @@
   import { Button } from 'ant-design-vue';
   import { BasicTable, useTable } from '@/components/Table';
   import { getBasicColumns } from './tableData';
-  import { cremationReservationListApi } from '@/api/funeral/cremation';
+  import { transportingReservationListApi } from '@/api/funeral/transporting';
   import { dateUtil } from '@/utils/dateUtil';
   import { formatPagedRequest } from '@/utils/http/abp/helper';
 
@@ -73,11 +73,12 @@
 
       const [registerTable, { getPaginationRef, setPagination, reload }] = useTable({
         // title: '火化信息',
-        api: cremationReservationListApi,
+        api: transportingReservationListApi,
         columns: getBasicColumns(),
         searchInfo: {
-          CreationStartTime: dateUtil().format('YYYY-MM-DD') + 'T00:00:00z',
-          MultiStatus: '1;2;3;4',
+          PickupStartTime: dateUtil().format('YYYY-MM-DD') + 'T00:00:00z',
+          PickupEndTime: dateUtil().format('YYYY-MM-DD') + 'T23:59:59z',
+          MultiStatus: '0;1;2',
         },
         showTableSetting: true,
         tableSetting: { fullScreen: true },
@@ -99,21 +100,21 @@
         return '-';
       }
 
+      function getCarPlate(record) {
+        return record.departure?.car?.plate;
+      }
+
       function getReservationStatusDisplayName(status) {
-        if (status == 1) {
+        if (status == 0) {
           return '已预约';
         }
 
+        if (status == 1) {
+          return '接运中';
+        }
+
         if (status == 2) {
-          return '火化中';
-        }
-
-        if (status == 3) {
-          return '已出炉';
-        }
-
-        if (status == 4) {
-          return '已取灰';
+          return '已到馆';
         }
 
         return '-';
@@ -176,6 +177,7 @@
         registerTable,
         getSexDisplayName,
         getReservationStatusDisplayName,
+        getCarPlate,
         dateUtil,
         voice,
       };

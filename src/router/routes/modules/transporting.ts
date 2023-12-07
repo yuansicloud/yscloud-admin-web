@@ -3,21 +3,21 @@ import type { AppRouteModule } from '@/router/types';
 import { LAYOUT } from '@/router/constant';
 // import { t } from '@/hooks/web/useI18n';
 
-const cremation: AppRouteModule = {
-  path: '/cremation',
-  name: 'Cremation',
+const transporting: AppRouteModule = {
+  path: '/transporting',
+  name: 'Transporting',
   component: LAYOUT,
-  redirect: '/cremation/display-screen',
+  redirect: '/transporting/display-screen',
   meta: {
     orderNo: 11,
     icon: 'ion:grid-outline',
-    title: '火化',
+    title: '接运',
   },
   children: [
     {
       path: 'display-screen',
       name: 'DisplayScreen',
-      component: () => import('/@/views/cremation/display-screen/index.vue'),
+      component: () => import('@/views/transporting/display-screen/index.vue'),
       meta: {
         title: '电子大屏',
       },
@@ -25,4 +25,4 @@ const cremation: AppRouteModule = {
   ],
 };
 
-export default cremation;
+export default transporting;
