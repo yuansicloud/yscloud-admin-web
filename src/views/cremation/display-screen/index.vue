@@ -14,8 +14,11 @@
     </template>
     <template #bodyCell="{ column, record }">
       <div class="text-6xl">
+        <template v-if="column.key === 'no'">
+          {{ record.no || '-' }}
+        </template>
         <template v-if="column.key === 'cremator'">
-          {{ record.cremator.name }}
+          {{ getCrematorDisplayName(record) }}
         </template>
         <template v-if="column.key === 'occupantName'">
           {{ record.occupantName }}
@@ -87,6 +90,19 @@
         showIndexColumn: false,
         rowKey: 'id',
         beforeFetch: formatPagedRequest,
+        afterFetch: (data) => {
+          const pageInfo = getPaginationRef();
+          console.log('info', pageInfo);
+          const pageSize = pageInfo.pageSize || pageInfo.defaultPageSize;
+          const totalCount = pageInfo.total;
+          const currentPage = pageInfo.current;
+          var currentNumber = 0;
+          data.forEach((item) => {
+            item.no = totalCount - (currentPage - 1) * pageSize - currentNumber;
+            currentNumber++;
+          });
+          return data;
+        },
         bordered: true,
       });
 
@@ -100,6 +116,10 @@
         }
 
         return '-';
+      }
+
+      function getCrematorDisplayName(record) {
+        return record.cremator?.name || '';
       }
 
       function getReservationStatusDisplayName(status) {
@@ -179,6 +199,7 @@
         registerTable,
         getSexDisplayName,
         getReservationStatusDisplayName,
+        getCrematorDisplayName,
         dateUtil,
         voice,
       };
