@@ -62,18 +62,38 @@
     setup() {
       const currentTime = ref('');
       const speech = new Speech();
+      // 创建响应式搜索信息引用
+      const searchInfo = ref({
+        CreationStartTime: dateUtil().format('YYYY-MM-DD') + 'T00:00:00z',
+        MultiStatus: '1;2;3;4',
+      });
 
       function updateCurrentTime() {
         currentTime.value = new Date().toLocaleTimeString();
+      }
+
+      // 更新搜索信息的方法
+      function updateSearchInfo() {
+        searchInfo.value.CreationStartTime = dateUtil().format('YYYY-MM-DD') + 'T00:00:00z';
       }
 
       onMounted(() => {
         updateCurrentTime(); // Update once immediately
         const timeWatch = setInterval(updateCurrentTime, 1000); // Update every second
         const listWatch = setInterval(refreshOrFlipPage, 30000); // Call every 30 seconds
+
+        // 每分钟检查并更新搜索信息
+        const dateCheckInterval = setInterval(() => {
+          const currentDate = dateUtil().format('YYYY-MM-DD');
+          if (currentDate !== dateUtil(searchInfo.value.CreationStartTime).format('YYYY-MM-DD')) {
+            updateSearchInfo();
+          }
+        }, 60000); // 每分钟检查一次
+
         onBeforeUnmount(() => {
           clearInterval(listWatch);
           clearInterval(timeWatch); // Clear the interval when component is unmounted
+          clearInterval(dateCheckInterval);
         });
       });
 
@@ -81,10 +101,7 @@
         // title: '火化信息',
         api: cremationReservationListApi,
         columns: getBasicColumns(),
-        searchInfo: {
-          CreationStartTime: dateUtil().format('YYYY-MM-DD') + 'T00:00:00z',
-          MultiStatus: '1;2;3;4',
-        },
+        searchInfo: searchInfo.value,
         showTableSetting: true,
         tableSetting: { fullScreen: true },
         showIndexColumn: false,
@@ -92,7 +109,6 @@
         beforeFetch: formatPagedRequest,
         afterFetch: (data) => {
           const pageInfo = getPaginationRef();
-          console.log('info', pageInfo);
           const pageSize = pageInfo.pageSize || pageInfo.defaultPageSize;
           const totalCount = pageInfo.total;
           const currentPage = pageInfo.current;
