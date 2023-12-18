@@ -40,6 +40,33 @@
             {{ getReservationStatusDisplayName(record.reservationStatus) }}
           </div>
         </template>
+        <template v-if="column.key === 'carryInTime'">
+          <div
+            :class="{
+              'text-red': !!record.carryIn,
+            }"
+          >
+            {{ getCarryInDisplayName(record) }}
+          </div>
+        </template>
+        <template v-if="column.key === 'takeoutTime'">
+          <div
+            :class="{
+              'text-green': !!record.takeOut,
+            }"
+          >
+            {{ getTakeOutDisplayName(record) }}
+          </div>
+        </template>
+        <template v-if="column.key === 'takeTime'">
+          <div
+            :class="{
+              'text-gray': record.ashTaking,
+            }"
+          >
+            {{ getAshTakingDisplayName(record) }}
+          </div>
+        </template>
         <template v-if="column.key === 'creationTime'">
           {{ dateUtil(record.creationTime).format('HH:mm') }}
         </template>
@@ -138,6 +165,27 @@
         return record.cremator?.name || '';
       }
 
+      function getCarryInDisplayName(record) {
+        if (record.carryIn) {
+          return dateUtil(record.carryIn?.carryInTime).format('HH:mm');
+        }
+        return '-';
+      }
+
+      function getTakeOutDisplayName(record) {
+        if (record.takeOut) {
+          return dateUtil(record.takeOut?.takeoutTime).format('HH:mm');
+        }
+        return '-';
+      }
+
+      function getAshTakingDisplayName(record) {
+        if (record.ashTaking) {
+          return dateUtil(record.ashTaking?.takeTime).format('HH:mm');
+        }
+        return '-';
+      }
+
       function getReservationStatusDisplayName(status) {
         if (status == 1) {
           return '已预约';
@@ -216,6 +264,9 @@
         getSexDisplayName,
         getReservationStatusDisplayName,
         getCrematorDisplayName,
+        getCarryInDisplayName,
+        getTakeOutDisplayName,
+        getAshTakingDisplayName,
         dateUtil,
         voice,
       };

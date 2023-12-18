@@ -41,6 +41,24 @@ export function getBasicColumns(): BasicColumn[] {
       dataIndex: 'reservationStatus',
     },
     {
+      title: '入炉时间',
+      width: 120,
+      sorter: true,
+      dataIndex: 'carryInTime',
+    },
+    {
+      title: '出炉时间',
+      width: 120,
+      sorter: true,
+      dataIndex: 'takeoutTime',
+    },
+    {
+      title: '取灰时间',
+      width: 120,
+      sorter: true,
+      dataIndex: 'takeTime',
+    },
+    {
       title: '登记时间',
       width: 120,
       sorter: true,
